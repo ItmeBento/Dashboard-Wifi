@@ -18,4 +18,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+Route::get('/access-point', function () {
+    return view('accessPoint.accessPoint');
+})->name('access-point');
+
+
 require __DIR__.'/auth.php';

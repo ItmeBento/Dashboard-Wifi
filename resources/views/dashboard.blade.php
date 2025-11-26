@@ -5,23 +5,41 @@
         <nav class="w-60 p-6 space-y-6 bg-gray-800">
             <ul class="space-y-4">
                 <li>
-                    <a href="#" class="flex items-center space-x-2 bg-gray-700 rounded-md px-4 py-2 font-semibold text-gray-300">
+                    <a href="#"
+                        class="flex items-center space-x-2 bg-gray-700 rounded-md px-4 py-2 font-semibold text-gray-300">
                         <span>Overview</span>
                     </a>
                 </li>
-                <li class="flex items-center space-x-2 cursor-pointer text-gray-500 hover:text-gray-300">
-                    <span>Access Point</span>
+
+                <li>
+                    <a href="{{ route('access-point') }}"
+                        class="flex items-center space-x-2 cursor-pointer text-gray-500 hover:text-gray-300">
+                        <span>Access Point</span>
+                    </a>
                 </li>
-                <li class="flex items-center space-x-2 cursor-pointer text-gray-500 hover:text-gray-300">
-                    <span>Connected Users</span>
+
+                <li>
+                    <a href="#"
+                        class="flex items-center space-x-2 cursor-pointer text-gray-500 hover:text-gray-300">
+                        <span>Connected Users</span>
+                    </a>
                 </li>
-                <li class="flex items-center space-x-2 cursor-pointer text-gray-500 hover:text-gray-300">
-                    <span>Alert</span>
+
+                <li>
+                    <a href="#"
+                        class="flex items-center space-x-2 cursor-pointer text-gray-500 hover:text-gray-300">
+                        <span>Alert</span>
+                    </a>
                 </li>
-                <li class="flex items-center space-x-2 cursor-pointer text-gray-500 hover:text-gray-300">
-                    <span>Settings</span>
+
+                <li>
+                    <a href="#"
+                        class="flex items-center space-x-2 cursor-pointer text-gray-500 hover:text-gray-300">
+                        <span>Settings</span>
+                    </a>
                 </li>
             </ul>
+
         </nav>
 
         <!-- Main -->
@@ -66,7 +84,7 @@
                                 $clients = array_merge(
                                     $c['wifiClients']['5G'] ?? [],
                                     $c['wifiClients']['2_4G'] ?? [],
-                                    $c['wifiClients']['unknown'] ?? []
+                                    $c['wifiClients']['unknown'] ?? [],
                                 );
                             @endphp
 
@@ -80,7 +98,6 @@
                                     </td>
                                 </tr>
                             @endforeach
-
                         @endforeach
 
                     </tbody>
@@ -107,7 +124,7 @@
                                 $clients = array_merge(
                                     $c['wifiClients']['5G'] ?? [],
                                     $c['wifiClients']['2_4G'] ?? [],
-                                    $c['wifiClients']['unknown'] ?? []
+                                    $c['wifiClients']['unknown'] ?? [],
                                 );
                             @endphp
 
@@ -120,7 +137,6 @@
                                     <td class="py-2">-</td>
                                 </tr>
                             @endforeach
-
                         @endforeach
 
                     </tbody>
@@ -132,21 +148,21 @@
     <!-- CHART JS -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-   <script>
-    const userChart = document.getElementById('userChart').getContext('2d');
+    <script>
+        const userChart = document.getElementById('userChart').getContext('2d');
 
-    new Chart(userChart, {
-        type: 'doughnut',
-        data: {
-            labels: ['Connected Users', 'Capacity'],
-            datasets: [{
-                data: [@json($userOnline ?? 0), @json(max(0, 200 - ($userOnline ?? 0)))],
-                backgroundColor: ['#3b82f6', '#1f2937'],
-                borderWidth: 0
-            }]
-        }
-    });
-</script>
+        new Chart(userChart, {
+            type: 'doughnut',
+            data: {
+                labels: ['Connected Users', 'Capacity'],
+                datasets: [{
+                    data: [@json($userOnline ?? 0), @json(max(0, 200 - ($userOnline ?? 0)))],
+                    backgroundColor: ['#3b82f6', '#1f2937'],
+                    borderWidth: 0
+                }]
+            }
+        });
+    </script>
 
 
 </x-app-layout>
