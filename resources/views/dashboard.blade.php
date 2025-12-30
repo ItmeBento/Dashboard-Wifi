@@ -3,7 +3,7 @@
     <div class="space-y-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen p-6">
 
         <!-- Summary Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-6">
             <div
                 class="group relative overflow-hidden bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-6 shadow-xl hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-300 hover:scale-105">
                 <div
@@ -23,18 +23,6 @@
                 <div class="relative">
                     <p class="text-purple-200 text-sm font-medium mb-2 uppercase tracking-wider">Total AP</p>
                     <p class="text-white font-bold text-4xl">{{ $totalAp }}</p>
-                </div>
-            </div>
-
-            <div
-                class="group relative overflow-hidden bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-xl p-6 shadow-xl hover:shadow-2xl hover:shadow-emerald-500/20 transition-all duration-300 hover:scale-105">
-                <div
-                    class="absolute inset-0 bg-gradient-to-r from-emerald-400/0 to-emerald-400/0 group-hover:from-emerald-400/10 group-hover:to-emerald-400/20 transition-all duration-300">
-                </div>
-                <div class="relative">
-                    <p class="text-emerald-200 text-sm font-medium mb-2 uppercase tracking-wider">Total Bandwidth Today
-                    </p>
-                    <p class="text-white font-bold text-4xl">190</p>
                 </div>
             </div>
         </div>
