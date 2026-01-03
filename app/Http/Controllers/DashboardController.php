@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -92,22 +93,22 @@ class DashboardController extends Controller
         // ============== PAGINATION LOGIC ==============
         // Flatten semua client devices
         $allClients = collect();
-        
+
         if (is_array($connections)) {
             foreach ($connections as $c) {
                 if (! is_array($c) || ! isset($c['wifiClients']) || ! is_array($c['wifiClients'])) {
                     continue;
                 }
-                
+
                 $wifiClients = $c['wifiClients'];
-                
+
                 // Gabungkan semua band (5G, 2.4G, unknown)
                 $clients = array_merge(
                     $wifiClients['5G'] ?? [],
                     $wifiClients['2_4G'] ?? [],
                     $wifiClients['unknown'] ?? []
                 );
-                
+
                 // Tambahkan informasi AP jika ada
                 foreach ($clients as $client) {
                     $client['ap_sn'] = $c['sn'] ?? null;
@@ -117,38 +118,26 @@ class DashboardController extends Controller
             }
         }
 
-        // Pagination sederhana
-        $perPage = request()->get('perPage', 10);
-        $page = request()->get('page', 1);
-        
-        // Hitung offset
-        $offset = ($page - 1) * $perPage;
-        
-        // Ambil data untuk halaman ini
-        $paginatedData = $allClients->slice($offset, $perPage)->values();
-        
-        // Hitung info pagination
-        $total = $allClients->count();
-        $lastPage = ceil($total / $perPage);
-        
-        // Data untuk view
-        $paginationData = [
-            'data' => $paginatedData,
-            'current_page' => $page,
-            'per_page' => $perPage,
-            'total' => $total,
-            'last_page' => $lastPage,
-            'from' => $offset + 1,
-            'to' => min($offset + $perPage, $total),
-        ];
+        $perPage = request('perPage', 10);
+        $page = request('page', 1);
+
+        $clients = new LengthAwarePaginator(
+            $allClients->forPage($page, $perPage),
+            $allClients->count(),
+            $perPage,
+            $page,
+            [
+                'path' => request()->url(),
+                'query' => request()->query(),
+            ]
+        );
 
         return view('dashboard', [
             'totalUser' => $totalUser,
             'totalAp' => $totalAp,
             'userOnline' => $userOnline,
             'logActivity' => $logActivity,
-            'connections' => $paginationData, // Data yang sudah dipaginasi
-            'allConnections' => $connections, // Data asli (untuk keperluan lain jika perlu)
+            'clients' => $clients,
             'dailyUsers' => $dailyUsers,
         ]);
     }
