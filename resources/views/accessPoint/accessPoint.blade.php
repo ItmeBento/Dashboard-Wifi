@@ -5,7 +5,7 @@
 
             <h1 class="text-white font-bold text-2xl mb-4">Access Point</h1>
 
-            @if($error)
+            @if ($error)
                 <div class="bg-red-500 text-white p-3 rounded">
                     {{ $error }}
                 </div>
@@ -13,26 +13,30 @@
 
             <!-- Summary -->
             <div class="grid grid-cols-4 gap-6">
-                <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-6 shadow-xl hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-300 hover:scale-105">
+                <div
+                    class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-6 shadow-xl hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-300 hover:scale-105">
                     <p class="text-gray-200">Total Access Point</p>
                     <p class="text-white font-bold text-2xl">{{ $devices->count() }}</p>
                 </div>
 
-                <div class="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-xl p-6 shadow-xl hover:shadow-2xl hover:shadow-emerald-500/20 transition-all duration-300 hover:scale-105">
+                <div
+                    class="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-xl p-6 shadow-xl hover:shadow-2xl hover:shadow-emerald-500/20 transition-all duration-300 hover:scale-105">
                     <p class="text-gray-200">AP Online</p>
                     <p class="text-green-400 font-bold text-2xl">
                         {{ $devices->where('state', 'online')->count() }}
                     </p>
                 </div>
 
-                <div class="bg-gradient-to-br from-red-600 to-red-800 rounded-xl p-6 shadow-xl hover:shadow-2xl hover:shadow-red-500/20 transition-all duration-300 hover:scale-105">
+                <div
+                    class="bg-gradient-to-br from-red-600 to-red-800 rounded-xl p-6 shadow-xl hover:shadow-2xl hover:shadow-red-500/20 transition-all duration-300 hover:scale-105">
                     <p class="text-gray-200">AP Offline</p>
                     <p class="text-red-400 font-bold text-2xl">
                         {{ $devices->where('state', '!=', 'online')->count() }}
                     </p>
                 </div>
 
-                <div class="bg-gradient-to-br from-yellow-600 to-yellow-800 rounded-xl p-6 shadow-xl hover:shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 hover:scale-105">
+                <div
+                    class="bg-gradient-to-br from-yellow-600 to-yellow-800 rounded-xl p-6 shadow-xl hover:shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 hover:scale-105">
                     <p class="text-gray-200">Total Connected Users</p>
                     <p class="text-white font-bold text-2xl">
                         @php
@@ -46,6 +50,23 @@
                         {{ $total }}
                     </p>
                 </div>
+            </div>
+
+            <div class="flex justify-between items-center mb-4">
+                <form method="GET" class="flex gap-2">
+                    <input type="text" name="search" value="{{ request('search') }}"
+                        placeholder="Search AP name / SN..."
+                        class="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:ring-blue-500">
+
+                    <select name="perPage" onchange="this.form.submit()"
+                        class="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white">
+                        @foreach ([10, 25, 50, 100] as $n)
+                            <option value="{{ $n }}" {{ request('perPage', 10) == $n ? 'selected' : '' }}>
+                                {{ $n }}
+                            </option>
+                        @endforeach
+                    </select>
+                </form>
             </div>
 
             <!-- Table -->
@@ -62,7 +83,7 @@
                     </thead>
 
                     <tbody>
-                        @foreach($devices as $d)
+                        @foreach ($devices as $d)
                             @php
                                 $userCount = 0;
                                 foreach (['5G', '2_4G', 'unknown'] as $band) {
@@ -76,7 +97,7 @@
                                 </td>
 
                                 <td class="py-2 flex items-center space-x-2">
-                                    @if(strtolower($d['state']) === 'online')
+                                    @if (strtolower($d['state']) === 'online')
                                         <span class="w-3 h-3 bg-green-500 rounded-full inline-block"></span>
                                         <span>Online</span>
                                     @else
@@ -91,6 +112,18 @@
                     </tbody>
 
                 </table>
+                @if ($devices->hasPages())
+                    <div class="mt-6 flex justify-between items-center text-sm text-gray-400">
+                        <div>
+                            Showing {{ $devices->firstItem() }} to {{ $devices->lastItem() }}
+                            of {{ $devices->total() }} results
+                        </div>
+
+                        <div>
+                            {{ $devices->onEachSide(2)->links('pagination::tailwind') }}
+                        </div>
+                    </div>
+                @endif
             </div>
 
         </main>

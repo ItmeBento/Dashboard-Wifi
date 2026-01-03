@@ -2,69 +2,37 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Http\Client\Response;
-use Illuminate\Http\Client\ConnectionException;
 
 class AccessPointController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $responses = Http::pool(fn ($pool) => [
             $pool->timeout(5)->get('http://172.16.100.26:67/api/onu'),
             $pool->timeout(5)->get('http://172.16.100.26:67/api/onu/connect'),
         ]);
 
-        $onuResponse = $responses[0];
-        $connectResponse = $responses[1];
-
-        /* =====================================================
-         | 1️⃣ HANDLE TIMEOUT / CONNECTION FAILED
-         ===================================================== */
-        if (
-            $onuResponse instanceof ConnectionException ||
-            $connectResponse instanceof ConnectionException
-        ) {
+        if (! $responses[0]->successful() || ! $responses[1]->successful()) {
             return view('accessPoint.accessPoint', [
-                'devices' => collect([]),
-                'error' => 'API bermasalah / tidak merespon',
-            ]);
-        }
-
-        /* =====================================================
-         | 2️⃣ HANDLE API ERROR (STATUS != 200)
-         ===================================================== */
-        if (
-            !($onuResponse instanceof Response) ||
-            !($connectResponse instanceof Response) ||
-            ! $onuResponse->successful() ||
-            ! $connectResponse->successful()
-        ) {
-            return view('accessPoint.accessPoint', [
-                'devices' => collect([]),
+                'devices' => collect(),
                 'error' => 'Gagal mengambil data dari API',
             ]);
         }
 
-        /* =====================================================
-         | 3️⃣ NORMAL FLOW
-         ===================================================== */
-        $onuData = $onuResponse->json();
-        $connectRaw = $connectResponse->json();
+        $onuData = $responses[0]->json();
+        $connectData = collect($responses[1]->json())->keyBy('sn');
 
-        $connectData = is_array($connectRaw) && isset($connectRaw['data'])
-            ? $connectRaw['data']
-            : $connectRaw;
-
-        $connectIndexed = collect($connectData)->keyBy('sn');
-
-        $merged = collect($onuData)->map(function ($onu) use ($connectIndexed) {
-            $connect = $connectIndexed->get($onu['sn']);
+        /* ================= MERGE ================= */
+        $devices = collect($onuData)->map(function ($onu) use ($connectData) {
+            $connect = $connectData->get($onu['sn']);
 
             return [
                 'sn' => $onu['sn'] ?? null,
                 'model' => $onu['model'] ?? null,
-                'state' => $connect['state'] ?? $onu['state'] ?? 'offline',
+                'state' => strtolower($connect['state'] ?? $onu['state'] ?? 'offline'),
                 'wifiClients' => $connect['wifiClients'] ?? [
                     '5G' => [],
                     '2_4G' => [],
@@ -73,9 +41,37 @@ class AccessPointController extends Controller
             ];
         });
 
+        /* =======================
+     | SEARCH
+     ======================= */
+        $search = $request->get('search');
+        if ($search) {
+            $devices = $devices->filter(fn ($d) => str_contains(strtolower($d['sn']), strtolower($search)) ||
+                str_contains(strtolower($d['model']), strtolower($search))
+            );
+        }
+
+        /* =======================
+         | PAGINATION
+         ======================= */
+        $perPage = $request->get('perPage', 10);
+        $page = $request->get('page', 1);
+
+        $devices = new LengthAwarePaginator(
+            $devices->forPage($page, $perPage),
+            $devices->count(),
+            $perPage,
+            $page,
+            [
+                'path' => request()->url(),
+                'query' => request()->query(),
+            ]
+        );
+
         return view('accessPoint.accessPoint', [
-            'devices' => $merged,
+            'devices' => $devices,
             'error' => null,
+            'search' => $search,
         ]);
     }
 }
