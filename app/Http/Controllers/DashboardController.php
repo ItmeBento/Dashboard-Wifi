@@ -68,20 +68,30 @@ class DashboardController extends Controller
             }
         }
 
+        // Mulai dari Senin minggu ini, tampilkan sampai hari ini, sisanya kosong sampai Minggu
+        $today = now();
+        $dayOfWeek = $today->dayOfWeek; // 0=Sunday, 1=Monday, ..., 6=Saturday
+        
+        // Hitung: Senin minggu ini adalah hari berapa
+        $daysToMonday = ($dayOfWeek == 0) ? 1 : ($dayOfWeek == 1 ? 0 : $dayOfWeek - 1);
+        $mondayThisWeek = $today->copy()->subDays($daysToMonday);
+        
+        // Build array: Senin (hari 0) sampai hari ini, sisa hari minggu kosong (0)
         $base = collect();
-        for ($i = 6; $i >= 0; $i--) {
-            $date = now()->subDays($i)->toDateString();
-            $base[$date] = 0;                    // default 0
+        for ($i = 0; $i < 7; $i++) {
+            $date = $mondayThisWeek->copy()->addDays($i)->toDateString();
+            $base[$date] = 0; // default 0
         }
 
-        // timpa dengan data yang ADA
+        // timpa dengan data yang ADA (hanya untuk Senin sampai hari ini)
         $stats = DB::table('daily_user_stats')
-            ->where('date', '>=', now()->subDays(6))
-            ->pluck('user_count', 'date');   // key = date, value = count
+            ->where('date', '>=', $mondayThisWeek->toDateString())
+            ->where('date', '<=', $today->toDateString())
+            ->pluck('user_count', 'date');
 
-        $base = $base->merge($stats);            // hari ada → ditimpa
+        $base = $base->merge($stats); // hari ada → ditimpa
 
-        $labels = $base->keys();  // kirim tanggal YYYY-MM-DD, bukan nama hari
+        $labels = $base->keys();  // kirim tanggal YYYY-MM-DD
         $data = $base->values();
 
         $dailyUsers = [
