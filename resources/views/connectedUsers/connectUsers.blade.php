@@ -3,7 +3,7 @@
 
         <main class="flex-1 p-6 space-y-6">
 
-            <h1 class="text-white font-bold text-2xl mb-4">Connected Users</h1>
+            <h1 class="text-white font-bold text-2xl mb-4">Pengguna Terhubung</h1>
 
             <form method="GET" class="mb-6 flex gap-3">
                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Search SN / Model"
@@ -47,7 +47,7 @@
                             <!-- Header Connected -->
                             <div class="flex items-center justify-between mb-4">
                                 <div>
-                                    <p class="text-sm text-gray-300">Connected Users</p>
+                                    <p class="text-sm text-gray-300">Pengguna Terhubung</p>
                                     <p class="text-2xl font-bold">{{ $ap['connected'] }}</p>
                                 </div>
                             </div>
@@ -64,10 +64,9 @@
                             <table class="w-full text-left text-gray-300 text-sm table-fixed">
                                 <thead class="border-b border-slate-700">
                                     <tr>
-                                        <th class="pb-4 font-semibold text-gray-200 w-2/6">Device Name</th>
-                                        <th class="pb-4 font-semibold text-gray-200 w-2/6">IP Address</th>
-                                        <th class="pb-4 font-semibold text-gray-200 w-2/6">MAC Address</th>
-                                        <th class="pb-4 font-semibold text-gray-200 w-1/6">Speed</th>
+                                        <th class="pb-4 font-semibold text-gray-200 w-2/6">Nama Perangkat</th>
+                                        <th class="pb-4 font-semibold text-gray-200 w-2/6">Alamat IP</th>
+                                        <th class="pb-4 font-semibold text-gray-200 w-2/6">Alamat MAC</th>
                                         <th class="pb-4 font-semibold text-gray-200 w-12">Status</th>
                                     </tr>
                                 </thead>
@@ -76,10 +75,9 @@
                                     @foreach ($clients as $client)
                                         <tr
                                             class="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors duration-200">
-                                            <td class="py-4 ">{{ $client['wifi_terminal_name'] ?? 'Unknown' }}</td>
+                                            <td class="py-4">{{ $client['wifi_terminal_name'] ?? 'Unknown' }}</td>
                                             <td class="py-4">{{ $client['wifi_terminal_ip'] ?? '-' }}</td>
                                             <td class="py-4">{{ $client['wifi_terminal_mac'] ?? '-' }}</td>
-                                            <td class="py-4">{{ $client['wifi_terminal_speed'] ?? '-' }}</td>
                                             <td class="py-4 flex items-center justify-center">
                                                 <div
                                                     class="h-3 w-3 rounded-full {{ $ap['state'] == 'online' ? 'bg-green-500' : 'bg-red-500' }}">

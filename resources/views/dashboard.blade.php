@@ -10,7 +10,7 @@
                     class="absolute inset-0 bg-gradient-to-r from-blue-400/0 to-blue-400/0 group-hover:from-blue-400/10 group-hover:to-blue-400/20 transition-all duration-300">
                 </div>
                 <div class="relative">
-                    <p class="text-blue-200 text-sm font-medium mb-2 uppercase tracking-wider">Connected Users</p>
+                    <p class="text-blue-200 text-sm font-medium mb-2 uppercase tracking-wider">Pengguna Terhubung</p>
                     <p class="text-white font-bold text-4xl">{{ $userOnline }}</p>
                 </div>
             </div>
@@ -21,7 +21,7 @@
                     class="absolute inset-0 bg-gradient-to-r from-purple-400/0 to-purple-400/0 group-hover:from-purple-400/10 group-hover:to-purple-400/20 transition-all duration-300">
                 </div>
                 <div class="relative">
-                    <p class="text-purple-200 text-sm font-medium mb-2 uppercase tracking-wider">Total AP</p>
+                    <p class="text-purple-200 text-sm font-medium mb-2 uppercase tracking-wider">Total ONT</p>
                     <p class="text-white font-bold text-4xl">{{ $totalAp }}</p>
                 </div>
             </div>
@@ -32,7 +32,7 @@
             <!-- KIRI -->
             <div
                 class="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-slate-700/50 flex flex-col  shadow-xl shadow-black/20">
-                <p class="text-white font-semibold mb-3 text-center">User Capacity</p>
+                <p class="text-white font-semibold mb-3 text-center">Kapasitas User</p>
                 <div class="relative w-full h-56">
                     <canvas id="userChart" class="absolute inset-0 h-full block"></canvas>
                 </div>
@@ -41,7 +41,7 @@
             <!-- KANAN -->
             <div
                 class="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-slate-700/50 flex flex-col  shadow-xl shadow-black/20">
-                <h3 class="text-white font-semibold mb-3">Grafik Users</h3>
+                <h3 class="text-white font-semibold mb-3">Rekap Total User</h3>
                 <div class="w-full h-56">
                     <canvas id="userChartDaily" class=" h-full"></canvas>
                 </div>
@@ -52,11 +52,11 @@
         <div class="bg-slate-800/50 backdrop-blur rounded-xl p-6 shadow-xl border border-slate-700/50 overflow-x-auto">
 
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-white font-semibold text-lg">Detail Connected Devices</h3>
+                <h3 class="text-white font-semibold text-lg">Detail Perangkat Terhubung</h3>
 
                 <!-- Items Per Page -->
                 <div class="flex items-center space-x-2">
-                    <span class="text-gray-400 text-sm mb-2">Show:</span>
+                    <span class="text-gray-400 text-sm mb-2">Lihat:</span>
                     <select onchange="window.location.href = updateUrlParam('perPage', this.value)"
                         class="bg-slate-700 border border-slate-600 text-black text-sm rounded-lg px-3 py-1.5 focus:ring-blue-500">
                         @foreach ([10, 25, 50, 100] as $n)
@@ -73,12 +73,10 @@
                 <table class="w-full text-left text-gray-300 text-sm">
                     <thead class="border-b border-slate-700">
                         <tr>
-                            <th class="pb-4">Device Name</th>
-                            <th class="pb-4">IP Address</th>
-                            <th class="pb-4">MAC Address</th>
-                            <th class="pb-4">AP Name</th>
-                            <th class="pb-4">Duration</th>
-                            <th class="pb-4">Traffic</th>
+                            <th class="pb-4">Nama Perangkat</th>
+                            <th class="pb-4">Alamat IP</th>
+                            <th class="pb-4">Alamat Mac</th>
+                            <th class="pb-4">Nama ONT</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -88,13 +86,11 @@
                                 <td class="py-4">{{ $client['wifi_terminal_ip'] ?? '-' }}</td>
                                 <td class="py-4">{{ $client['wifi_terminal_mac'] ?? '-' }}</td>
                                 <td class="py-4">{{ $client['ap_name'] ?? '-' }}</td>
-                                <td class="py-4">-</td>
-                                <td class="py-4">-</td>
                             </tr>
                         @empty
                             <tr>
                                 <td colspan="6" class="py-8 text-center text-gray-400">
-                                    No devices connected
+                                    Tidak Ada Perangkat Terhubung
                                 </td>
                             </tr>
                         @endforelse
@@ -108,13 +104,13 @@
                     class="flex flex-col sm:flex-row items-center justify-between border-t border-slate-700 pt-6 gap-4">
 
                     <div class="text-sm text-gray-400">
-                        Showing
+                        Menampilkan
                         <span class="font-medium">{{ $clients->firstItem() }}</span>
-                        to
+                        Ke
                         <span class="font-medium">{{ $clients->lastItem() }}</span>
-                        of
+                        Dari
                         <span class="font-medium">{{ $clients->total() }}</span>
-                        results
+                        Total
                     </div>
 
                     <div>
@@ -181,7 +177,7 @@
         new Chart(userChart, {
             type: 'bar',
             data: {
-                labels: ['Connected Users'], // Label untuk sumbu X
+                labels: ['User Terhubung'], // Label untuk sumbu X
                 datasets: [{
                     label: 'Online Users', // Nama dataset (muncul di legend)
                     data: [@json($userOnline ?? 0)], // Hanya data connected user
@@ -227,7 +223,7 @@
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return `Connected: ${context.raw}`;
+                                return `Terhubung: ${context.raw}`;
                             }
                         }
                     }

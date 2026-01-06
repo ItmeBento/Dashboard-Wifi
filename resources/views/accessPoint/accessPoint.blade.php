@@ -3,7 +3,7 @@
 
         <main class="flex-1 p-6 space-y-6">
 
-            <h1 class="text-white font-bold text-2xl mb-4">Access Point</h1>
+            <h1 class="text-white font-bold text-2xl mb-4">ONT</h1>
 
             @if ($error)
                 <div class="bg-red-500 text-white p-3 rounded">
@@ -15,13 +15,13 @@
             <div class="grid grid-cols-4 gap-6">
                 <div
                     class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-6 shadow-xl hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-300 hover:scale-105">
-                    <p class="text-gray-200">Total Access Point</p>
+                    <p class="text-gray-200">Total ONT</p>
                     <p class="text-white font-bold text-2xl">{{ $devices->count() }}</p>
                 </div>
 
                 <div
                     class="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-xl p-6 shadow-xl hover:shadow-2xl hover:shadow-emerald-500/20 transition-all duration-300 hover:scale-105">
-                    <p class="text-gray-200">AP Online</p>
+                    <p class="text-gray-200">ONT Online</p>
                     <p class="text-green-400 font-bold text-2xl">
                         {{ $devices->where('state', 'online')->count() }}
                     </p>
@@ -29,7 +29,7 @@
 
                 <div
                     class="bg-gradient-to-br from-red-600 to-red-800 rounded-xl p-6 shadow-xl hover:shadow-2xl hover:shadow-red-500/20 transition-all duration-300 hover:scale-105">
-                    <p class="text-gray-200">AP Offline</p>
+                    <p class="text-gray-200">ONT Offline</p>
                     <p class="text-red-400 font-bold text-2xl">
                         {{ $devices->where('state', '!=', 'online')->count() }}
                     </p>
@@ -37,7 +37,7 @@
 
                 <div
                     class="bg-gradient-to-br from-yellow-600 to-yellow-800 rounded-xl p-6 shadow-xl hover:shadow-2xl hover:shadow-yellow-500/20 transition-all duration-300 hover:scale-105">
-                    <p class="text-gray-200">Total Connected Users</p>
+                    <p class="text-gray-200">Total Pengguna</p>
                     <p class="text-white font-bold text-2xl">
                         @php
                             $total = 0;
@@ -76,7 +76,8 @@
                 <table class="w-full text-left text-gray-300">
                     <thead>
                         <tr>
-                            <th class="pb-2">AP Name</th>
+                            <th class="pb-2">Serial-Number</th>
+                            <th class="pb-2">Lokasi ONT</th>
                             <th class="pb-2">Status</th>
                             <th class="pb-2">Connected Users</th>
                         </tr>
@@ -94,6 +95,10 @@
                             <tr class="border-b border-gray-700">
                                 <td class="py-2">
                                     {{ $d['model'] }} - {{ $d['sn'] }}
+                                </td>
+
+                                <td class="py-2">
+                                    -
                                 </td>
 
                                 <td class="py-2 flex items-center space-x-2">
