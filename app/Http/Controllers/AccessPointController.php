@@ -5,20 +5,61 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\ConnectionException;
 
 class AccessPointController extends Controller
 {
     public function index(Request $request)
     {
-        $responses = Http::pool(fn ($pool) => [
-            $pool->timeout(5)->get('http://172.16.100.26:67/api/onu'),
-            $pool->timeout(5)->get('http://172.16.100.26:67/api/onu/connect'),
-        ]);
+        try {
+            $responses = Http::pool(fn ($pool) => [
+                $pool->timeout(5)->get('http://172.16.100.26:67/api/onu'),
+                $pool->timeout(5)->get('http://172.16.100.26:67/api/onu/connect'),
+            ]);
 
-        if (! $responses[0]->successful() || ! $responses[1]->successful()) {
+            $resp0Ok = is_object($responses[0]) && method_exists($responses[0], 'successful') && $responses[0]->successful();
+            $resp1Ok = is_object($responses[1]) && method_exists($responses[1], 'successful') && $responses[1]->successful();
+
+            if (! $resp0Ok || ! $resp1Ok) {
+                $perPage = $request->get('perPage', 10);
+                $page = $request->get('page', 1);
+
+                $emptyPaginator = new LengthAwarePaginator(
+                    [],
+                    0,
+                    $perPage,
+                    $page,
+                    [
+                        'path' => $request->url(),
+                        'query' => $request->query(),
+                    ]
+                );
+
+                return view('accessPoint.accessPoint', [
+                    'devices' => $emptyPaginator,
+                    'error' => 'Gagal mengambil data dari API',
+                    'search' => $request->get('search'),
+                ]);
+            }
+        } catch (ConnectionException) {
+            $perPage = $request->get('perPage', 10);
+            $page = $request->get('page', 1);
+
+            $emptyPaginator = new LengthAwarePaginator(
+                [],
+                0,
+                $perPage,
+                $page,
+                [
+                    'path' => $request->url(),
+                    'query' => $request->query(),
+                ]
+            );
+
             return view('accessPoint.accessPoint', [
-                'devices' => collect(),
-                'error' => 'Gagal mengambil data dari API',
+                'devices' => $emptyPaginator,
+                'error' => 'Koneksi ke API timeout',
+                'search' => $request->get('search'),
             ]);
         }
 

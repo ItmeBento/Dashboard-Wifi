@@ -42,6 +42,12 @@
             <div
                 class="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-slate-700/50 flex flex-col  shadow-xl shadow-black/20">
                 <h3 class="text-white font-semibold mb-3">Rekap Total User</h3>
+                <div id="userChartDailyControls" class="flex justify-end items-center mb-3">
+                    <select id="userChartDailyMonth"
+                        class="bg-slate-700 border border-slate-600 text-gray-200 text-sm rounded-lg px-3 py-1.5 focus:ring-blue-500">
+                        <option value="weekly">Mingguan</option>
+                    </select>
+                </div>
                 <div class="w-full h-56">
                     <canvas id="userChartDaily" class=" h-full"></canvas>
                 </div>
@@ -75,7 +81,7 @@
                         <tr>
                             <th class="pb-4">Nama Perangkat</th>
                             <th class="pb-4">Alamat IP</th>
-                            <th class="pb-4">Alamat Mac</th>
+                            <th class="pb-4">Alamat ONT</th>
                             <th class="pb-4">Nama ONT</th>
                         </tr>
                     </thead>
@@ -90,7 +96,7 @@
                         @empty
                             <tr>
                                 <td colspan="6" class="py-8 text-center text-gray-400">
-                                    Tidak Ada Perangkat Terhubung
+                                    Tidak Ada Perangkat terhubung
                                 </td>
                             </tr>
                         @endforelse
@@ -223,7 +229,7 @@
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return `Terhubung: ${context.raw}`;
+                                return `Connected: ${context.raw}`;
                             }
                         }
                     }

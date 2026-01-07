@@ -14,9 +14,23 @@ class ConnectedUsers extends Controller
         try {
             $response = Http::timeout(10)->get(config('services.onu_api.url'));
 
-            if (! $response->successful()) {
+            if (!is_object($response) || !method_exists($response, 'successful') || ! $response->successful()) {
+                $perPage = $request->get('perPage', 5);
+                $page = $request->get('page', 1);
+
+                $emptyPaginator = new LengthAwarePaginator(
+                    [],
+                    0,
+                    $perPage,
+                    $page,
+                    [
+                        'path' => $request->url(),
+                        'query' => $request->query(),
+                    ]
+                );
+
                 return view('connectedUsers.connectUsers', [
-                    'aps' => collect([]),
+                    'aps' => $emptyPaginator,
                     'error' => 'Gagal mengambil data dari API',
                 ]);
             }
@@ -66,8 +80,22 @@ class ConnectedUsers extends Controller
             ]);
 
         } catch (ConnectionException) {
+            $perPage = $request->get('perPage', 5);
+            $page = $request->get('page', 1);
+
+            $emptyPaginator = new LengthAwarePaginator(
+                [],
+                0,
+                $perPage,
+                $page,
+                [
+                    'path' => $request->url(),
+                    'query' => $request->query(),
+                ]
+            );
+
             return view('connectedUsers.connectUsers', [
-                'aps' => collect([]),
+                'aps' => $emptyPaginator,
                 'error' => 'Koneksi ke API timeout',
             ]);
         }

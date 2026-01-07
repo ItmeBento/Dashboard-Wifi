@@ -13,7 +13,7 @@ class AlertNotifController extends Controller
 
             $response = Http::timeout(5)->get($url);
 
-            if (!$response->successful()) {
+            if (!is_object($response) || !method_exists($response, 'successful') || !$response->successful()) {
                 return 0;
             }
 

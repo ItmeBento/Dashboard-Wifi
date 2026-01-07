@@ -12,7 +12,7 @@ class AlertController extends Controller
         try {
             $response = Http::timeout(5)->get(config('services.onu_api.url'));
 
-            if (! $response->successful()) {
+            if (!is_object($response) || !method_exists($response, 'successful') || ! $response->successful()) {
                 $aps = collect();
             } else {
                 $aps = collect($response->json() ?: []);

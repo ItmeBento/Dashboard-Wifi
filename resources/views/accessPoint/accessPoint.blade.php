@@ -71,7 +71,7 @@
 
             <!-- Table -->
             <div class="bg-gray-800 rounded-lg p-6">
-                <h3 class="text-white font-semibold mb-4">Access Point Status</h3>
+                <h3 class="text-white font-semibold mb-4">Status ONT</h3>
 
                 <table class="w-full text-left text-gray-300">
                     <thead>
@@ -79,7 +79,7 @@
                             <th class="pb-2">Serial-Number</th>
                             <th class="pb-2">Lokasi ONT</th>
                             <th class="pb-2">Status</th>
-                            <th class="pb-2">Connected Users</th>
+                            <th class="pb-2">User Terhubung</th>
                         </tr>
                     </thead>
 
@@ -120,8 +120,8 @@
                 @if ($devices->hasPages())
                     <div class="mt-6 flex justify-between items-center text-sm text-gray-400">
                         <div>
-                            Showing {{ $devices->firstItem() }} to {{ $devices->lastItem() }}
-                            of {{ $devices->total() }} results
+                            Menampilkan {{ $devices->firstItem() }} Ke {{ $devices->lastItem() }}
+                            Dari {{ $devices->total() }} Total
                         </div>
 
                         <div>
