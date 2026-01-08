@@ -6,10 +6,25 @@
 
     <!-- Logo Section & Toggle Button -->
     <div class="shrink-0 flex items-center justify-between p-6 border-b border-gray-700/50">
-        <a href="{{ route('dashboard') }}" :class="sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+        {{-- <a href="{{ route('dashboard') }}" :class="sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'"
             class="transition-opacity duration-300 w-32 block">
             <img src="{{ asset('images/logo.png') }}" alt="logo" width="128" height="32">
-        </a>
+        </a> --}}
+        <a href="{{ route('dashboard') }}"
+   :class="sidebarOpen ? 'scale-100' : 'scale-95'"
+   class="transition-transform duration-300 w-32 block"
+>
+    <img
+        src="{{ asset('images/lifemedia.webp') }}"
+        alt="logo"
+        width="128"
+        height="32"
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+    >
+</a>
+
 
         <!-- Toggle Button - Hidden on mobile -->
         <button @click="sidebarOpen = !sidebarOpen"
