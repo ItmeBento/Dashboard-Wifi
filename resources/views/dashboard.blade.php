@@ -54,6 +54,70 @@
             </div>
         </div>
 
+        <!-- Rekap Mingguan & Bulanan Per Lokasi -->
+        <div class="bg-slate-800/50 backdrop-blur rounded-xl p-6 shadow-xl border border-slate-700/50">
+
+            <div class="flex flex-col lg:flex-row gap-6">
+
+                <!-- Kiri: Search & Filter -->
+                <div class="lg:w-1/4 space-y-4">
+                    <h3 class="text-white font-semibold text-lg">Filter</h3>
+
+                    <div>
+                        <label class="text-gray-300 text-sm block mb-2">Cari Lokasi</label>
+                        <input type="text" id="locationSearch" placeholder="Cari lokasi..."
+                            class="w-full px-3 py-2 rounded bg-slate-700 text-white text-sm border border-slate-600 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label class="text-gray-300 text-sm block mb-2">Kemantren</label>
+                        <select id="kemantrenFilter"
+                            class="w-full px-3 py-2 rounded bg-slate-700 text-white text-sm border border-slate-600 focus:ring-blue-500">
+                            <option value="">Semua</option>
+                            @foreach ($kemantrenList as $km)
+                                <option value="{{ $km }}">{{ $km }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="text-gray-300 text-sm block mb-2">Bulan (Bulanan)</label>
+                        <select id="monthFilter" onchange="updateLocationChart()"
+                            class="w-full px-3 py-2 rounded bg-slate-700 text-white text-sm border border-slate-600 focus:ring-blue-500">
+                            @foreach ($months as $num => $name)
+                                <option value="{{ $num }}" {{ $num == $currentMonth ? 'selected' : '' }}>
+                                    {{ $name }} {{ $currentYear }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <button onclick="filterLocationChart()"
+                        class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white text-sm font-medium">
+                        Filter
+                    </button>
+                </div>
+
+                <!-- Kanan: Chart & Kontrol -->
+                <div class="lg:w-3/4 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-white font-semibold text-lg">Rekap Per Lokasi</h3>
+                        <div class="flex gap-2">
+                            <select id="chartPeriod" onchange="updateLocationChart()"
+                                class="px-3 py-1.5 bg-slate-700 border border-slate-600 text-gray-200 text-sm rounded-lg focus:ring-blue-500">
+                                <option value="weekly">Mingguan</option>
+                                <option value="monthly">Bulanan</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-700/50 rounded-lg p-4 border border-slate-600/50">
+                        <canvas id="locationChart" class="w-full" style="max-height: 300px;"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
         <!-- Rekap User Online Per Lokasi -->
         <div class="bg-slate-800/50 backdrop-blur rounded-xl p-6 shadow-xl border border-slate-700/50">
 
@@ -65,12 +129,14 @@
                     <div class="grid grid-cols-10 gap-4">
 
                         <!-- Box 30% - Lokasi -->
-                        <div class="col-span-3 bg-slate-700/50 p-4 rounded-lg text-white space-y-2 border border-slate-600/50">
+                        <div
+                            class="col-span-3 bg-slate-700/50 p-4 rounded-lg text-white space-y-2 border border-slate-600/50">
                             <p class="font-semibold text-lg text-blue-400">{{ $locationData['location'] }}</p>
                             <div class="text-xs space-y-1 text-gray-300">
                                 <p><span class="text-gray-400">Kemantren:</span> {{ $locationData['kemantren'] }}</p>
                                 <p><span class="text-gray-400">Kelurahan:</span> {{ $locationData['kelurahan'] }}</p>
-                                <p><span class="text-gray-400">RT/RW:</span> {{ $locationData['rt'] }} / {{ $locationData['rw'] }}</p>
+                                <p><span class="text-gray-400">RT/RW:</span> {{ $locationData['rt'] }} /
+                                    {{ $locationData['rw'] }}</p>
                                 <p><span class="text-gray-400">SN:</span> {{ $locationData['sn'] }}</p>
                             </div>
                             <div class="pt-2 border-t border-slate-600">
@@ -80,7 +146,8 @@
                         </div>
 
                         <!-- Box 70% - Detail Pengguna (tampilkan maksimal 5) -->
-                        <div class="col-span-7 bg-slate-700/50 p-4 rounded-lg text-white border border-slate-600/50 overflow-x-auto">
+                        <div
+                            class="col-span-7 bg-slate-700/50 p-4 rounded-lg text-white border border-slate-600/50 overflow-x-auto">
 
                             <table class="w-full text-left text-gray-300 text-sm table-fixed">
                                 <thead class="border-b border-slate-600">
@@ -92,7 +159,8 @@
                                 </thead>
                                 <tbody>
                                     @foreach (array_slice($locationData['clients'], 0, 5) as $client)
-                                        <tr class="border-b border-slate-600/30 hover:bg-slate-600/20 transition-colors duration-200">
+                                        <tr
+                                            class="border-b border-slate-600/30 hover:bg-slate-600/20 transition-colors duration-200">
                                             <td class="py-3">{{ $client['wifi_terminal_name'] ?? 'Unknown' }}</td>
                                             <td class="py-3">{{ $client['wifi_terminal_ip'] ?? '-' }}</td>
                                             <td class="py-3 text-xs">{{ $client['wifi_terminal_mac'] ?? '-' }}</td>
@@ -135,64 +203,7 @@
             @endif
         </div>
 
-        <!-- Rekap Mingguan & Bulanan Per Lokasi -->
-        <div class="bg-slate-800/50 backdrop-blur rounded-xl p-6 shadow-xl border border-slate-700/50">
-
-            <div class="flex flex-col lg:flex-row gap-6">
-
-                <!-- Kiri: Search & Filter -->
-                <div class="lg:w-1/4 space-y-4">
-                    <h3 class="text-white font-semibold text-lg">Filter</h3>
-
-                    <div>
-                        <label class="text-gray-300 text-sm block mb-2">Cari Lokasi</label>
-                        <input type="text" id="locationSearch" placeholder="Cari lokasi..."
-                            class="w-full px-3 py-2 rounded bg-slate-700 text-white text-sm border border-slate-600 focus:ring-blue-500">
-                    </div>
-
-                    <div>
-                        <label class="text-gray-300 text-sm block mb-2">Kemantren</label>
-                        <select id="kemantrenFilter" class="w-full px-3 py-2 rounded bg-slate-700 text-white text-sm border border-slate-600 focus:ring-blue-500">
-                            <option value="">Semua</option>
-                            @foreach ($kemantrenList as $km)
-                                <option value="{{ $km }}">{{ $km }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="text-gray-300 text-sm block mb-2">Bulan (Bulanan)</label>
-                        <select id="monthFilter" onchange="updateLocationChart()" class="w-full px-3 py-2 rounded bg-slate-700 text-white text-sm border border-slate-600 focus:ring-blue-500">
-                            @foreach ($months as $num => $name)
-                                <option value="{{ $num }}" {{ $num == $currentMonth ? 'selected' : '' }}>{{ $name }} {{ $currentYear }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <button onclick="filterLocationChart()" class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white text-sm font-medium">
-                        Filter
-                    </button>
-                </div>
-
-                <!-- Kanan: Chart & Kontrol -->
-                <div class="lg:w-3/4 space-y-4">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-white font-semibold text-lg">Rekap Per Lokasi</h3>
-                        <div class="flex gap-2">
-                            <select id="chartPeriod" onchange="updateLocationChart()" class="px-3 py-1.5 bg-slate-700 border border-slate-600 text-gray-200 text-sm rounded-lg focus:ring-blue-500">
-                                <option value="weekly">Mingguan</option>
-                                <option value="monthly">Bulanan</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="bg-slate-700/50 rounded-lg p-4 border border-slate-600/50">
-                        <canvas id="locationChart" class="w-full" style="max-height: 300px;"></canvas>
-                    </div>
-                </div>
-
-            </div>
-        </div>
+        
 
     </div>
 
@@ -255,60 +266,60 @@
             if (userChartEl) {
                 const userChart = userChartEl.getContext('2d');
                 new Chart(userChart, {
-            type: 'bar',
-            data: {
-                labels: ['User Terhubung'], // Label untuk sumbu X
-                datasets: [{
-                    label: 'Online Users', // Nama dataset (muncul di legend)
-                    data: [@json($userOnline ?? 0)], // Hanya data connected user
-                    backgroundColor: '#3b82f6', // Biru cerah
-                    borderColor: '#1f2937', // Hitam/abu-abu tua
-                    borderWidth: 2,
-                    borderRadius: 8 // Opsional: sudut membulat
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            color: '#d1d5db',
-                            stepSize: 1, // Agar skala naik per 1 unit (jika jumlah kecil)
-                            font: {
-                                size: 12
+                    type: 'bar',
+                    data: {
+                        labels: ['User Terhubung'], // Label untuk sumbu X
+                        datasets: [{
+                            label: 'Online Users', // Nama dataset (muncul di legend)
+                            data: [@json($userOnline ?? 0)], // Hanya data connected user
+                            backgroundColor: '#3b82f6', // Biru cerah
+                            borderColor: '#1f2937', // Hitam/abu-abu tua
+                            borderWidth: 2,
+                            borderRadius: 8 // Opsional: sudut membulat
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: '#d1d5db',
+                                    stepSize: 1, // Agar skala naik per 1 unit (jika jumlah kecil)
+                                    font: {
+                                        size: 12
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: '#d1d5db',
+                                    font: {
+                                        size: 14
+                                    }
+                                },
+                                grid: {
+                                    display: false // Hilangkan grid di sumbu X
+                                }
                             }
                         },
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            color: '#d1d5db',
-                            font: {
-                                size: 14
-                            }
-                        },
-                        grid: {
-                            display: false // Hilangkan grid di sumbu X
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return `Connected: ${context.raw}`;
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `Connected: ${context.raw}`;
+                                    }
+                                }
                             }
                         }
                     }
-                }
-            }
                 });
             }
         });
