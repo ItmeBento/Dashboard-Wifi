@@ -13,7 +13,15 @@ function updateLocationChart() {
     if (period === "weekly") {
         chartData = buildWeeklyChart();
     } else {
-        chartData = buildMonthlyChart();
+        // For monthly, fetch server-side Top N first, then render when data is available
+        const month = parseInt(document.getElementById('monthFilter')?.value || window.currentMonth || (new Date().getMonth()+1), 10);
+        const year = window.currentYear || new Date().getFullYear();
+        const top = parseInt(document.getElementById('topLimit')?.value || 10, 10);
+        const kemantren = document.getElementById('kemantrenFilter')?.value || '';
+        const search = document.getElementById('locationSearch')?.value || '';
+
+        fetchMonthlyData(month, year, top, kemantren, search);
+        return; // will re-render after fetch
     }
 
     console.log("Chart data:", chartData);
@@ -104,6 +112,7 @@ function buildWeeklyChart() {
         .value.toLowerCase();
     const kemantren = document.getElementById("kemantrenFilter").value;
     const locationMap = {};
+    const topLimit = parseInt(document.getElementById("topLimit")?.value || 8, 10);
 
     // Ensure we always have 7-day slots (Monday..Sunday)
     Object.keys(data).forEach((k) => {
@@ -117,20 +126,23 @@ function buildWeeklyChart() {
         const dayIdx = (jsDay + 6) % 7; // convert so Mon=0 ... Sun=6
 
         dayData.forEach((item) => {
-            const loc = item.location;
+            const loc = item.location || 'Unknown';
+            const k = item.kemantren || '';
+            const compositeKey = `${loc}||${k}`; // avoid collisions when same location in different kemantren
             const matchSearch = loc.toLowerCase().includes(search);
-            const matchKemantren =
-                kemantren === "" || item.kemantren === kemantren;
+            const matchKemantren = kemantren === "" || k === kemantren;
 
             if (matchSearch && matchKemantren) {
-                if (!locationMap[loc]) {
-                    locationMap[loc] = {
-                        label: loc,
+                if (!locationMap[compositeKey]) {
+                    const label = k ? `${loc} (${k})` : loc;
+                    locationMap[compositeKey] = {
+                        label: label,
                         data: new Array(7).fill(0),
                         borderWidth: 0,
                     };
                 }
-                locationMap[loc].data[dayIdx] = item.total || 0;
+                // accumulate in case multiple rows exist for same location/day
+                locationMap[compositeKey].data[dayIdx] += Number(item.total || 0);
             }
         });
     });
@@ -145,13 +157,16 @@ function buildWeeklyChart() {
 
     return {
         labels: labels, // Monday..Sunday
-        datasets: locations.slice(0, 8), // Limit to 8 locations
+        datasets: locations.slice(0, topLimit), // Limit to top N locations
     };
 }
 
 // Fetch monthly data from server for selected month/year
 function fetchMonthlyData(month, year) {
-    const url = `/dashboard/monthly-location-data?month=${month}&year=${year}`;
+    const top = parseInt(document.getElementById('topLimit')?.value || 10, 10);
+    const kemantren = encodeURIComponent(document.getElementById('kemantrenFilter')?.value || '');
+    const search = encodeURIComponent(document.getElementById('locationSearch')?.value || '');
+    const url = `/dashboard/monthly-location-data?month=${month}&year=${year}&top=${top}&kemantren=${kemantren}&search=${search}`;
     fetch(url, { credentials: "same-origin" })
         .then((res) => {
             if (!res.ok) throw new Error("Network response was not ok");

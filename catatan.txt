@@ -6,3 +6,10 @@ catatan kecil penting {
        jadi diperlukan solusi yang pasti untuk kasus ini
     3. 
 }
+
+tgl 13-01-2026
+update  modified:   app/Http/Controllers/ConnectedUsers.php
+        modified:   app/Http/Controllers/DashboardController.php
+        modified:   public/js/location-chart.js
+        modified:   resources/views/dashboard.blade.php
+        modified:   resources/views/welcome.blade.php

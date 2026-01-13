@@ -19,7 +19,7 @@
             border border-white/10
             shadow-xl shadow-black/50">
 
-            <img src="{{ asset('images/ilustratorMonitor.jpg') }}" alt="ilustrator" class="w-72 mb-6 rounded-lg">
+            <img src="{{ asset('images/ilustratorMonitor.jpg') }}" alt="Ilustrasi monitor" loading="lazy" class="w-72 mb-6 rounded-lg">
 
             <div class="flex items-center justify-center">
                 <a href="{{ route('login') }}"

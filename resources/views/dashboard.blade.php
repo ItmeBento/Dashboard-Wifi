@@ -3,7 +3,7 @@
     <div class="space-y-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen p-6">
 
         <!-- Summary Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
             <div
                 class="group relative overflow-hidden bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-6 shadow-xl hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-300 hover:scale-105">
                 <div
@@ -28,10 +28,10 @@
         </div>
 
         <!-- Charts Section -->
-        <div class="grid gap-4 xl:grid-cols-[4fr_6fr] lg:grid-cols-2 rounded-xl">
+        <div class="grid gap-4 lg:grid-cols-3 rounded-xl">
             <!-- KIRI -->
             <div
-                class="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-slate-700/50 flex flex-col  shadow-xl shadow-black/20">
+                class="lg:col-span-1 bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-slate-700/50 flex flex-col  shadow-xl shadow-black/20">
                 <p class="text-white font-semibold mb-3 text-center">Kapasitas User</p>
                 <div class="relative w-full h-56">
                     <canvas id="userChart" class="absolute inset-0 h-full block"></canvas>
@@ -40,7 +40,7 @@
 
             <!-- KANAN -->
             <div
-                class="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-slate-700/50 flex flex-col  shadow-xl shadow-black/20">
+                class="lg:col-span-2 bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-slate-700/50 flex flex-col  shadow-xl shadow-black/20">
                 <h3 class="text-white font-semibold mb-3">Rekap Total User</h3>
                 <div id="userChartDailyControls" class="flex justify-end items-center mb-3">
                     <select id="userChartDailyMonth"
@@ -57,10 +57,10 @@
         <!-- Rekap Mingguan & Bulanan Per Lokasi -->
         <div class="bg-slate-800/50 backdrop-blur rounded-xl p-6 shadow-xl border border-slate-700/50">
 
-            <div class="flex flex-col lg:flex-row gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
 
                 <!-- Kiri: Search & Filter -->
-                <div class="lg:w-1/4 space-y-4">
+                <div class="lg:col-span-1 space-y-4">
                     <h3 class="text-white font-semibold text-lg">Filter</h3>
 
                     <div>
@@ -98,7 +98,7 @@
                 </div>
 
                 <!-- Kanan: Chart & Kontrol -->
-                <div class="lg:w-3/4 space-y-4">
+                <div class="lg:col-span-3 space-y-4">
                     <div class="flex justify-between items-center">
                         <h3 class="text-white font-semibold text-lg">Rekap Per Lokasi</h3>
                         <div class="flex gap-2">
@@ -106,6 +106,13 @@
                                 class="px-3 py-1.5 bg-slate-700 border border-slate-600 text-gray-200 text-sm rounded-lg focus:ring-blue-500">
                                 <option value="weekly">Mingguan</option>
                                 <option value="monthly">Bulanan</option>
+                            </select>
+                            <select id="topLimit" onchange="updateLocationChart()"
+                                class="px-3 py-1.5 bg-slate-700 border border-slate-600 text-gray-200 text-sm rounded-lg focus:ring-blue-500">
+                                <option value="5">Top 5</option>
+                                <option value="8" selected>Top 8</option>
+                                <option value="10">Top 10</option>
+                                <option value="15">Top 15</option>
                             </select>
                         </div>
                     </div>
@@ -149,7 +156,7 @@
                         <div
                             class="col-span-7 bg-slate-700/50 p-4 rounded-lg text-white border border-slate-600/50 overflow-x-auto">
 
-                            <table class="w-full text-left text-gray-300 text-sm table-fixed">
+                            <table class="w-full text-left text-gray-300 text-sm table-auto min-w-full">
                                 <thead class="border-b border-slate-600">
                                     <tr>
                                         <th class="pb-3 font-semibold text-gray-200 w-2/6">Nama Perangkat</th>

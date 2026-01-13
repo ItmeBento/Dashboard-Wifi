@@ -35,36 +35,43 @@ class ConnectedUsers extends Controller
                 ]);
             }
 
-            $aps = collect($response->json())->map(function ($ap) {
-                $clients = $ap['wifiClients'] ?? [];
+            // Process API JSON without collecting everything into memory.
+            $raw = $response->json();
 
+            $search = $request->get('search');
+            $perPage = (int) $request->get('perPage', 5);
+            $page = (int) $request->get('page', 1);
+
+            $start = max(0, ($page - 1) * $perPage);
+            $collected = 0; // total matched items
+            $pageItems = [];
+
+            foreach ($raw as $ap) {
+                $clients = $ap['wifiClients'] ?? [];
                 $ap['connected'] =
                     count($clients['5G'] ?? []) +
                     count($clients['2_4G'] ?? []) +
                     count($clients['unknown'] ?? []);
 
-                return $ap;
-            });
+                // Apply search filter if provided
+                if ($search) {
+                    $hay = strtolower(($ap['sn'] ?? '') . ' ' . ($ap['model'] ?? ''));
+                    if (strpos($hay, strtolower($search)) === false) {
+                        continue;
+                    }
+                }
 
-            /* =======================
-             | SEARCH
-             ======================= */
-            if ($search = $request->get('search')) {
-                $aps = $aps->filter(fn ($ap) =>
-                    str_contains(strtolower($ap['sn'] ?? ''), strtolower($search)) ||
-                    str_contains(strtolower($ap['model'] ?? ''), strtolower($search))
-                );
+                // This item matches search (or no search). Count it and add to page buffer if within range.
+                if ($collected >= $start && count($pageItems) < $perPage) {
+                    $pageItems[] = $ap;
+                }
+
+                $collected++;
             }
 
-            /* =======================
-             | PAGINATION
-             ======================= */
-            $perPage = $request->get('perPage', 5);
-            $page = $request->get('page', 1);
-
             $aps = new LengthAwarePaginator(
-                $aps->forPage($page, $perPage),
-                $aps->count(),
+                $pageItems,
+                $collected,
                 $perPage,
                 $page,
                 [
@@ -76,7 +83,7 @@ class ConnectedUsers extends Controller
             return view('connectedUsers.connectUsers', [
                 'aps' => $aps,
                 'error' => null,
-                'search' => $search,
+                'search' => $search ?? null,
             ]);
 
         } catch (ConnectionException) {

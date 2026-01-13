@@ -192,26 +192,44 @@ class DashboardController extends Controller
 
         // Data per hari (Senin-Minggu) untuk mingguan
         $dayLabels = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
-        $weeklyLocationByDay = [];
-        for ($i = 0; $i < 7; $i++) {
-            $date = $monday->copy()->addDays($i);
-            $weeklyLocationByDay[$date->toDateString()] = DB::table('daily_location_stats')
-                ->where('date', $date->toDateString())
+        // Cache weekly per-day aggregated location stats for short period
+        $weeklyLocationByDay = cache()->remember(sprintf('weekly_location_by_day_%s', $monday->toDateString()), 120, function () use ($monday) {
+            $result = [];
+            for ($i = 0; $i < 7; $i++) {
+                $date = $monday->copy()->addDays($i);
+                $rows = DB::table('daily_location_stats')
+                    ->where('date', $date->toDateString())
+                    ->groupBy('location', 'kemantren')
+                    ->selectRaw('location, kemantren, SUM(user_count) as total')
+                    ->get()
+                    ->map(function ($r) {
+                        return [
+                            'location' => $r->location,
+                            'kemantren' => $r->kemantren,
+                            'total' => (int) $r->total,
+                        ];
+                    })->toArray();
+
+                $result[$date->toDateString()] = $rows;
+            }
+            return $result;
+        });
+
+        // Aggregate untuk bulan ini (default current month)
+        $monthlyLocationData = cache()->remember(sprintf('monthly_location_data_%d_%d', $currentYear, $currentMonth), 300, function () use ($firstDayOfMonth, $today, $currentYear, $currentMonth) {
+            return DB::table('daily_location_stats')
+                ->whereYear('date', $currentYear)
+                ->whereMonth('date', $currentMonth)
+                ->whereBetween('date', [$firstDayOfMonth, $today])
                 ->groupBy('location', 'kemantren')
                 ->selectRaw('location, kemantren, SUM(user_count) as total')
                 ->get()
-                ->toArray();
-        }
-
-        // Aggregate untuk bulan ini (default current month)
-        $monthlyLocationData = DB::table('daily_location_stats')
-            ->whereYear('date', $currentYear)
-            ->whereMonth('date', $currentMonth)
-            ->whereBetween('date', [$firstDayOfMonth, $today])
-            ->groupBy('location', 'kemantren')
-            ->selectRaw('location, kemantren, SUM(user_count) as total')
-            ->get()
-            ->toArray();
+                ->map(fn($r) => [
+                    'location' => $r->location,
+                    'kemantren' => $r->kemantren,
+                    'total' => (int) $r->total,
+                ])->toArray();
+        });
 
         // Semua bulan untuk dropdown
         $months = [
@@ -234,6 +252,9 @@ class DashboardController extends Controller
     {
         $month = (int) $request->query('month', now()->month);
         $year  = (int) $request->query('year', now()->year);
+        $top   = (int) $request->query('top', 10);
+        $kemantren = $request->query('kemantren', null);
+        $search = $request->query('search', null);
 
         $start = Carbon::createFromDate($year, $month, 1)->toDateString();
         $end   = Carbon::createFromDate($year, $month, 1)->endOfMonth()->toDateString();
@@ -243,13 +264,34 @@ class DashboardController extends Controller
             $end = $today;
         }
 
-        $data = DB::table('daily_location_stats')
-            ->whereYear('date', $year)
-            ->whereMonth('date', $month)
-            ->whereBetween('date', [$start, $end])
-            ->groupBy('location', 'kemantren')
-            ->selectRaw('location, kemantren, SUM(user_count) as total')
-            ->get();
+        $cacheKey = sprintf('monthly_location_data_%d_%d_top%d_k%s_s%s', $year, $month, $top, $kemantren ?? 'all', $search ?? 'all');
+
+        $data = cache()->remember($cacheKey, 300, function () use ($year, $month, $start, $end, $top, $kemantren, $search) {
+            $query = DB::table('daily_location_stats')
+                ->whereYear('date', $year)
+                ->whereMonth('date', $month)
+                ->whereBetween('date', [$start, $end])
+                ->groupBy('location', 'kemantren')
+                ->selectRaw('location, kemantren, SUM(user_count) as total');
+
+            if ($kemantren) {
+                $query->where('kemantren', $kemantren);
+            }
+
+            // allow simple search on location
+            if ($search) {
+                $query->havingRaw("LOWER(location) LIKE ?", ['%'.strtolower($search).'%']);
+            }
+
+            $rows = $query->orderByDesc('total')->limit(max(1, $top))->get()
+                ->map(fn($r) => [
+                    'location' => $r->location,
+                    'kemantren' => $r->kemantren,
+                    'total' => (int) $r->total,
+                ])->toArray();
+
+            return $rows;
+        });
 
         return response()->json($data);
     }
