@@ -259,8 +259,9 @@ function buildMonthlyChart() {
     const baseColor = 'rgba(59,130,246,0.8)';
     const othersColor = 'rgba(107,114,128,0.9)';
 
-    // Build dataset with per-bar colors
-    const backgroundColors = topData.map((_, i) => generateColors(topData.length)[i] || baseColor);
+    // Build dataset with per-bar colors (generate once)
+    const _colors = generateColors(topData.length);
+    const backgroundColors = topData.map((_, i) => _colors[i] || baseColor);
     if (othersTotal > 0) backgroundColors.push(othersColor);
 
     return {

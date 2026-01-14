@@ -22,6 +22,9 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 Route::get('/dashboard/monthly-location-data', [DashboardController::class, 'monthlyLocationData'])
     ->middleware(['auth','verified']);
 
+Route::get('/dashboard/location-clients', [DashboardController::class, 'locationClients'])
+    ->middleware(['auth','verified']);
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

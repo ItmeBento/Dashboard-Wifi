@@ -193,6 +193,11 @@
                                 </tbody>
                             </table>
 
+                            <div class="mt-3 flex justify-end">
+                                <button onclick="fetchLocationClients('{{ $locationData['sn'] }}')"
+                                    class="px-3 py-1.5 bg-slate-600 hover:bg-slate-500 rounded text-sm text-white">Lihat Semua</button>
+                            </div>
+
                         </div>
 
                     </div>
@@ -257,7 +262,7 @@
         // Data untuk location chart - per hari mingguan
         window.dayLabels = @json($dayLabels ?? []);
         window.weeklyLocationByDay = @json($weeklyLocationByDay ?? []);
-        window.monthlyLocationData = @json($monthlyLocationData ?? []);
+        window.monthlyLocationData = [];
         window.currentMonth = @json($currentMonth ?? 1);
         window.currentYear = @json($currentYear ?? now()->year);
 
@@ -363,6 +368,55 @@ document.addEventListener('DOMContentLoaded', () => {
         window.dailyUsersData = @json($dailyUsers['data'] ?? []);
     </script>
 
-    <script src="{{ asset('js/location-chart.js') }}"></script>
+    <script src="{{ asset('js/location-chart.js') }}" defer></script>
+
+    <!-- Clients modal for per-location full list -->
+    <div id="clientsModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50">
+        <div class="bg-slate-800 rounded-lg w-11/12 md:w-2/3 lg:w-1/2 p-4">
+            <div class="flex justify-between items-center mb-3">
+                <h4 class="text-white font-semibold">Detail Clients</h4>
+                <button onclick="hideClientsModal()" class="text-gray-300">Tutup</button>
+            </div>
+            <div id="clientsList" class="text-sm text-gray-200 max-h-72 overflow-auto space-y-2">
+                <!-- populated by AJAX -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchLocationClients(sn) {
+            const modal = document.getElementById('clientsModal');
+            const container = document.getElementById('clientsList');
+            container.innerHTML = '<div class="text-gray-400">Memuat...</div>';
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            try {
+                const res = await fetch(`/dashboard/location-clients?sn=${encodeURIComponent(sn)}`, { credentials: 'same-origin' });
+                if (!res.ok) throw new Error('failed');
+                const data = await res.json();
+                container.innerHTML = '';
+                if (!Array.isArray(data) || data.length === 0) {
+                    container.innerHTML = '<div class="text-gray-400">Tidak ada perangkat</div>';
+                    return;
+                }
+                data.forEach(c => {
+                    const el = document.createElement('div');
+                    el.className = 'p-2 bg-slate-700/50 rounded';
+                    el.innerHTML = `<div class="flex justify-between"><div class="font-medium">${c.wifi_terminal_name||'Unknown'}</div><div class="text-sm text-gray-300">${c.wifi_terminal_ip||'-'}</div></div><div class="text-xs text-gray-400">${c.wifi_terminal_mac||''}</div>`;
+                    container.appendChild(el);
+                });
+            } catch (e) {
+                container.innerHTML = '<div class="text-red-400">Gagal memuat data</div>';
+                console.error(e);
+            }
+        }
+
+        function hideClientsModal() {
+            const modal = document.getElementById('clientsModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    </script>
 
 </x-app-layout>

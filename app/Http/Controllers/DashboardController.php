@@ -23,28 +23,39 @@ class DashboardController extends Controller
         $totalUser   = 0;
         $logActivity = collect();
 
-        /* ---------- hitung user & total AP ---------- */
+        /* ---------- hitung user & total AP (cached external API calls) ---------- */
         try {
-            $responseOnu  = Http::timeout(5)->get('http://172.16.105.26:6767/api/onu');
-            $responseConn = Http::timeout(5)->get('http://172.16.105.26:6767/api/onu/connect');
+            $onus = cache()->remember('dashboard_api_onu', 5, function () {
+                try {
+                    $resp = Http::timeout(5)->get('http://172.16.105.26:6767/api/onu');
+                    return $resp->ok() ? ($resp->json() ?: []) : [];
+                } catch (\Throwable $e) {
+                    Log::warning('dashboard_api_onu fetch failed: '.$e->getMessage());
+                    return [];
+                }
+            });
 
-            if ($responseOnu->ok()) {
-                $onus    = $responseOnu->json();
-                $totalAp = is_array($onus) ? count($onus) : 0;
-            }
+            $connections = cache()->remember('dashboard_api_onu_connections', 5, function () {
+                try {
+                    $resp = Http::timeout(5)->get('http://172.16.105.26:6767/api/onu/connect');
+                    return $resp->ok() ? ($resp->json() ?: []) : [];
+                } catch (\Throwable $e) {
+                    Log::warning('dashboard_api_onu_connections fetch failed: '.$e->getMessage());
+                    return [];
+                }
+            });
 
-            if ($responseConn->ok()) {
-                $connections = $responseConn->json();
-                if (is_array($connections)) {
-                    foreach ($connections as $c) {
-                        if (!is_array($c) || !isset($c['wifiClients'])) {
-                            continue;
-                        }
-                        $wifi = $c['wifiClients'];
-                        $userOnline += count($wifi['5G']    ?? []);
-                        $userOnline += count($wifi['2_4G'] ?? []);
-                        $userOnline += count($wifi['unknown'] ?? []);
+            $totalAp = is_array($onus) ? count($onus) : 0;
+
+            if (is_array($connections)) {
+                foreach ($connections as $c) {
+                    if (!is_array($c) || !isset($c['wifiClients'])) {
+                        continue;
                     }
+                    $wifi = $c['wifiClients'];
+                    $userOnline += count($wifi['5G']    ?? []);
+                    $userOnline += count($wifi['2_4G'] ?? []);
+                    $userOnline += count($wifi['unknown'] ?? []);
                 }
             }
         } catch (\Throwable $e) {
@@ -117,8 +128,8 @@ class DashboardController extends Controller
         $ontMap = cache()->remember('ont_map_paket_all', 600,
                                     fn() => $this->readOntMap());
 
-        /* ---------- susun clients + detail lokasi dari Sheet ---------- */
-        $allClients = collect();
+        /* ---------- susun summary lokasi + preview clients (optimize memory) ---------- */
+        $locationsMap = [];
         if (is_array($connections)) {
             foreach ($connections as $c) {
                 $sn   = strtoupper(trim($c['sn'] ?? ''));
@@ -130,51 +141,55 @@ class DashboardController extends Controller
                     $c['wifiClients']['unknown'] ?? []
                 );
 
+                if (!isset($locationsMap[$sn])) {
+                    $locationsMap[$sn] = [
+                        'sn' => $sn,
+                        'location' => $info['location'] ?? '-',
+                        'kemantren' => $info['kemantren'] ?? '-',
+                        'kelurahan' => $info['kelurahan'] ?? '-',
+                        'rt' => $info['rt'] ?? '-',
+                        'rw' => $info['rw'] ?? '-',
+                        'clients_preview' => [],
+                        'count' => 0,
+                    ];
+                }
+
                 foreach ($clients as $cl) {
-                    $cl['ap_sn']         = $c['sn']           ?? null;
-                    $cl['ap_name']       = $info['location']  ?? '-';
-                    $cl['ap_kemantren']  = $info['kemantren'] ?? '-';
-                    $cl['ap_kelurahan']  = $info['kelurahan'] ?? '-';
-                    $cl['ap_rt']         = $info['rt']        ?? '-';
-                    $cl['ap_rw']         = $info['rw']        ?? '-';
-                    $cl['ap_ip']         = $info['ip']        ?? '-';
-                    $cl['ap_pic']        = $info['pic']       ?? '-';
-                    $cl['ap_coordinate'] = $info['coordinate'] ?? '-';
-                    $allClients->push($cl);
+                    $locationsMap[$sn]['count']++;
+
+                    if (count($locationsMap[$sn]['clients_preview']) < 5) {
+                        $locationsMap[$sn]['clients_preview'][] = [
+                            'wifi_terminal_name' => $cl['wifi_terminal_name'] ?? 'Unknown',
+                            'wifi_terminal_ip' => $cl['wifi_terminal_ip'] ?? '-',
+                            'wifi_terminal_mac' => $cl['wifi_terminal_mac'] ?? '-',
+                        ];
+                    }
                 }
             }
         }
 
-        // Paginate flat clients list (keperluan legacy / opsional)
-        $perPage = request('perPage', 10);
-        $page    = request('page', 1);
-        $clients = new LengthAwarePaginator(
-            $allClients->forPage($page, $perPage),
-            $allClients->count(),
-            $perPage,
-            $page,
-            ['path' => request()->url(), 'query' => request()->query()]
-        );
-
-        // Build locations collection grouped by AP SN and sort by connected users desc
-        $locationsCollection = collect();
-        foreach ($allClients->groupBy('ap_sn') as $sn => $group) {
-            $first = $group->first();
-            $locationsCollection->push([
-                'sn' => $sn,
-                'location' => $first['ap_name'] ?? '-','kemantren' => $first['ap_kemantren'] ?? '-','kelurahan' => $first['ap_kelurahan'] ?? '-','rt' => $first['ap_rt'] ?? '-','rw' => $first['ap_rw'] ?? '-',
-                'clients' => $group->values()->all(),
-                'count' => $group->count(),
-            ]);
-        }
-
-        $locationsSorted = $locationsCollection->sortByDesc('count')->values();
+        // Convert map to collection and sort by count desc
+        $locationsCollection = collect(array_values($locationsMap))->sortByDesc('count')->values();
 
         $locPerPage = request('locPerPage', 5);
         $locPage = request('locPage', 1);
+        $paginated = $locationsCollection->forPage($locPage, $locPerPage)->values()->all();
+
+        // Prepare final locations for view: include limited clients (max 5) in key 'clients' for compatibility
         $locations = new LengthAwarePaginator(
-            $locationsSorted->forPage($locPage, $locPerPage),
-            $locationsSorted->count(),
+            array_map(function ($row) {
+                return [
+                    'sn' => $row['sn'],
+                    'location' => $row['location'],
+                    'kemantren' => $row['kemantren'],
+                    'kelurahan' => $row['kelurahan'],
+                    'rt' => $row['rt'],
+                    'rw' => $row['rw'],
+                    'clients' => $row['clients_preview'] ?? [],
+                    'count' => $row['count'] ?? 0,
+                ];
+            }, $paginated),
+            $locationsCollection->count(),
             $locPerPage,
             $locPage,
             ['path' => request()->url(), 'query' => request()->query()]
@@ -294,6 +309,66 @@ class DashboardController extends Controller
         });
 
         return response()->json($data);
+    }
+
+    /**
+     * Return full clients list for a given AP SN (used by AJAX on-demand)
+     */
+    public function locationClients(Request $request)
+    {
+        $sn = strtoupper(trim($request->query('sn', '')));
+        if ($sn === '') {
+            return response()->json(['error' => 'sn required'], 400);
+        }
+
+        // Try to get cached connections (same cache key as used in index)
+        $connections = cache()->get('dashboard_api_onu_connections', null);
+        if ($connections === null) {
+            try {
+                $resp = Http::timeout(5)->get('http://172.16.105.26:6767/api/onu/connect');
+                $connections = $resp->ok() ? ($resp->json() ?: []) : [];
+                cache()->put('dashboard_api_onu_connections', $connections, 5);
+            } catch (\Throwable $e) {
+                Log::warning('locationClients fetch failed: '.$e->getMessage());
+                $connections = [];
+            }
+        }
+
+        $ontMap = cache()->remember('ont_map_paket_all', 600, fn() => $this->readOntMap());
+
+        // Find connection by SN and build clients
+        $found = null;
+        foreach ($connections as $c) {
+            if (strtoupper(trim($c['sn'] ?? '')) === $sn) {
+                $found = $c;
+                break;
+            }
+        }
+
+        if (!$found) {
+            return response()->json([]);
+        }
+
+        $clients = array_merge(
+            $found['wifiClients']['5G']    ?? [],
+            $found['wifiClients']['2_4G']  ?? [],
+            $found['wifiClients']['unknown'] ?? []
+        );
+
+        $info = $ontMap[$sn] ?? [];
+
+        $result = array_map(function ($cl) use ($found, $info) {
+            return [
+                'wifi_terminal_name' => $cl['wifi_terminal_name'] ?? 'Unknown',
+                'wifi_terminal_ip' => $cl['wifi_terminal_ip'] ?? '-',
+                'wifi_terminal_mac' => $cl['wifi_terminal_mac'] ?? '-',
+                'ap_sn' => $found['sn'] ?? null,
+                'ap_name' => $info['location'] ?? '-',
+                'ap_kemantren' => $info['kemantren'] ?? '-',
+            ];
+        }, $clients);
+
+        return response()->json(array_values($result));
     }
 
     /* ---------- Google Client ---------- */
