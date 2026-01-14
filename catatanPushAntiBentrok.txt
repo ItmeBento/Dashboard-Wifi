@@ -38,6 +38,10 @@ Backup ke repo sendiri:
 
 git push origin main
 
+reset perubahan
+git fetch origin
+git reset --hard origin/main
+
 
 Kalau ditolak lagi → force-with-lease, titik.
 
